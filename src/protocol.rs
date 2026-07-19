@@ -10,6 +10,18 @@
 //! (`modes`, `models`, capability maps), and typing them fully would be churn
 //! for no benefit. Serde ignores unknown fields by default, so narrow structs
 //! stay forward-compatible as Kiro evolves.
+//!
+//! Why not the official `agent-client-protocol-schema` crate? We evaluated it
+//! (2026-07-19). It is well-made and its versioned `v1`/`v2` modules are a nice
+//! future-proofing story, but adopting it added 25 transitive crates (+71% to
+//! the dependency tree), including a *mandatory* `schemars` JSON-Schema
+//! generator we would never call. The future-proofing that actually matters to
+//! us — surviving *additive* protocol growth — is already handled here by
+//! ignoring unknown fields plus the `SessionUpdate::Other` fallback, at zero
+//! dependency cost. The message set is also effectively frozen: kiro-tty runs
+//! on dumb terminals, so it will never grow image prompts, permission-request
+//! schemas, or plan panels. Maintaining ~150 stable lines beats carrying that
+//! tree. Revisit only if the modelled surface ever genuinely grows.
 
 use serde::{Deserialize, Serialize};
 
