@@ -1,0 +1,30 @@
+[package]
+name = "kiro-tty"
+version = "0.1.0"
+edition = "2021"
+description = "A dumb-terminal, line-oriented frontend for Kiro CLI over the Agent Client Protocol (ACP)"
+
+[dependencies]
+# Async runtime: process spawning, piped I/O, channels, signals.
+tokio = { version = "1.47.1", features = [
+    "rt-multi-thread",
+    "macros",
+    "process",
+    "io-util",
+    "io-std",
+    "sync",
+    "signal",
+    "time",
+    "fs",
+] }
+# Serialization for JSON-RPC / ACP messages.
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+# Application error handling with context.
+anyhow = "1.0.100"
+# CLI argument parsing (derive API).
+clap = { version = "4.5.51", features = ["derive"] }
+
+[profile.release]
+opt-level = 3
+lto = true
