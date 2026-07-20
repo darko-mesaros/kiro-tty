@@ -1,1 +1,5 @@
 /target
+
+# Local secrets for docker-compose (e.g. KIRO_API_KEY). Never commit.
+.env
+.env.local

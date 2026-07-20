@@ -1,0 +1,26 @@
+#!/bin/sh
+# Kiro TTY login shell.
+#
+# This is the `kiro` user's login shell (see /etc/passwd). Logging in over SSH
+# or telnet therefore drops straight into Kiro over ACP instead of a normal
+# shell. When Kiro TTY exits (/quit), the login session ends.
+#
+# Note: this is a deliberately minimal login shell. It does not implement `-c`
+# command execution, so `ssh host <command>` is not supported -- only
+# interactive logins. That is sufficient for the dumb-terminal use case.
+
+export PATH="/usr/local/bin:${PATH:-/usr/bin:/bin}"
+
+# telnet/ssh login sessions start with a clean environment. The entrypoint
+# stashes KIRO_API_KEY (and optional terminal settings) here so Kiro can
+# authenticate in headless/API-key mode.
+[ -r /etc/kiro-tty.env ] && . /etc/kiro-tty.env
+
+WORKSPACE="${KIRO_TTY_WORKSPACE:-/home/kiro/workspace}"
+cd "$WORKSPACE" 2>/dev/null || cd "$HOME" 2>/dev/null || cd /
+
+set -- --agent tty --cwd "$(pwd)"
+[ -n "${KIRO_TTY_WIDTH:-}" ] && set -- "$@" --width "$KIRO_TTY_WIDTH"
+[ -n "${KIRO_TTY_NEWLINE:-}" ] && set -- "$@" --newline "$KIRO_TTY_NEWLINE"
+
+exec kiro-tty "$@"

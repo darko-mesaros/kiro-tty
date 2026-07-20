@@ -1,0 +1,63 @@
+# Kiro TTY container stack.
+#
+# Brings up a container where the login shell (over SSH or telnet) is Kiro TTY
+# talking to Kiro via ACP, using the `tty` agent.
+#
+# Quick start:
+#   KIRO_TTY_PASSWORD=something docker compose up --build -d
+#   telnet localhost 2323          # or: ssh kiro@localhost -p 2222
+#   (password is whatever you set; defaults to "kiro")
+#
+# SECURITY (read before changing ports):
+#   * telnet is PLAINTEXT. The password and all I/O are unencrypted.
+#   * The Kiro agent runs with --trust-all-tools, so anyone who logs in can
+#     make Kiro run arbitrary commands INSIDE this container. The container is
+#     the blast radius -- it is not run privileged and mounts no host paths.
+#   * Authentication is via KIRO_API_KEY: the container acts as that key's Kiro
+#     identity and consumes its subscription credits.
+#   Ports are bound to 127.0.0.1 by default. Only change that if you truly
+#   intend to accept remote connections and understand the exposure.
+
+name: kiro-tty
+
+services:
+  kiro-tty:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kiro-tty:latest
+    container_name: kiro-tty
+    hostname: kiro-tty
+    ports:
+      - "127.0.0.1:2222:22"   # SSH
+      - "127.0.0.1:2323:23"   # telnet
+    environment:
+      # Kiro authentication (headless / API-key mode).
+      # Generate a key at https://app.kiro.dev -> API Keys (requires a Kiro Pro,
+      # Pro+, Pro Max, or Power subscription). Then either export it in your
+      # shell or put KIRO_API_KEY=ksk_... in a .env file next to this compose
+      # file (compose loads .env automatically; .env is gitignored).
+      KIRO_API_KEY: "${KIRO_API_KEY:-}"
+      # Override with:  KIRO_TTY_PASSWORD=... docker compose up
+      KIRO_TTY_PASSWORD: "${KIRO_TTY_PASSWORD:-kiro}"
+      # Optional terminal shaping for the login shell:
+      # KIRO_TTY_WIDTH: "40"
+      # KIRO_TTY_NEWLINE: "crlf"
+    volumes:
+      # Kiro CLI is installed INSIDE the image (see Dockerfile) and authenticates
+      # via the KIRO_API_KEY above, so nothing host-specific is required. This
+      # named volume just persists the self-provisioned bun/kas runtime (~100MB)
+      # across restarts so it is not re-downloaded each time.
+      - "kiro-data:/home/kiro/.local/share/kiro-cli"
+      # Pre-login banner, mounted so you can edit docker/issue and see the change
+      # on the next connection -- no image rebuild required. It is also baked into
+      # the image as a default, so the container still works without this mount.
+      # (issue.net is the file shown for telnet/SSH network logins.)
+      - "./docker/issue:/etc/issue:ro"
+      - "./docker/issue:/etc/issue.net:ro"
+    # Keep it modest; this is a demo service, not production.
+    restart: unless-stopped
+
+# Persists the self-provisioned bun/kas runtime across restarts.
+volumes:
+  kiro-data:
