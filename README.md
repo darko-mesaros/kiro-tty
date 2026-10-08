@@ -30,12 +30,13 @@ Apple Silicon). The matching Kiro CLI build is picked automatically.
 | 2323 | telnet | 80 columns | telnet clients, printing terminals (DECwriter) |
 | 2222 | SSH | 80 columns | modern clients |
 | 6400 | raw TCP | 40 columns, `^H` erase | Commodore 64 with NovaTerm, WiFi modems that do not speak telnet |
+| 6401 | raw TCP | 80 columns | IBM PC with a DOS terminal program (MS-DOS Kermit, TERM2) |
 
-Port 6400 sends no telnet protocol bytes at all. The telnet port opens every
+Ports 6400 and 6401 send no telnet protocol bytes at all. The telnet port opens every
 connection with option negotiation (`IAC DO ECHO`, `IAC WILL SGA`, ...). Some
 WiFi modems pass those through raw, and terminal programs like NovaTerm print
 them as `^A ^_ ^C` garbage and may drop the line. If you see junk at connect
-time, use port 6400 instead.
+time, use a raw port instead.
 
 ## Configuration
 
@@ -49,6 +50,7 @@ Everything is set in `.env` next to `docker-compose.yml` (it is gitignored).
 | `KIRO_TTY_WIDTH` | `80` | Wrap width for the telnet and SSH ports. |
 | `KIRO_TTY_NEWLINE` | `lf` | `lf`, `crlf`, or `cr`. Over telnet/SSH the pty already sends CR+LF, so `lf` is right. |
 | `KIRO_TTY_C64_WIDTH` | `40` | Wrap width on port 6400. Try `39` if your terminal double-spaces full lines. |
+| `KIRO_TTY_PC_WIDTH` | `80` | Wrap width on port 6401. |
 
 ## Vintage hardware
 
@@ -91,6 +93,21 @@ fewer, and avoid `\ | _ ~ { }`, which the C64 character set cannot show. (An
 ANSI colour version was tried first; NovaTerm's ANSI mode ignored the
 background colours on real hardware.) The banner is a fixed file, never model
 output, so the "only plain text from Kiro" rule still holds.
+
+### IBM PC with MS-DOS
+
+Use a DOS terminal program on the PC's COM port, through the WiFi modem, and
+dial the 80-column raw port:
+
+```
+ATDT192.168.1.50:6401
+```
+
+Ready-made files are in [`clients/dos/`](clients/dos/): a Kermit script
+(`KIROTTY.INI` + `KIROTTY.BAT`) and TERM2, a 125-byte polled terminal for
+machines whose 8250 serial chip is faulty. The PC profile keeps `^?` as erase
+and echoes a `^H` raw, so the cursor steps back either way. Tested on an IBM
+5160 (TERM2, 300 baud).
 
 ## Using it
 

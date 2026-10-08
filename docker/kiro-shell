@@ -25,6 +25,16 @@ case "${KIRO_TTY_PROFILE:-}" in
         KIRO_TTY_WIDTH="${KIRO_TTY_C64_WIDTH:-40}"
         stty erase '^H' 2>/dev/null || true
         ;;
+    pc)
+        # IBM PC with a DOS terminal program (MS-DOS Kermit, Telix, Procomm):
+        # 80 columns. The pty honours only one erase key, and DOS programs
+        # disagree on ^? vs ^H. Keep ^? as erase and turn off echoctl, so a
+        # ^H is echoed raw (cursor steps back, next keystroke overwrites)
+        # instead of as a visible "^H"; kiro-tty's clean_line then applies
+        # it to the line Kiro receives.
+        KIRO_TTY_WIDTH="${KIRO_TTY_PC_WIDTH:-80}"
+        stty erase '^?' -echoctl 2>/dev/null || true
+        ;;
 esac
 
 WORKSPACE="${KIRO_TTY_WORKSPACE:-/home/kiro/workspace}"

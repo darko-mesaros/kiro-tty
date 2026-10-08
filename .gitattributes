@@ -1,0 +1,4 @@
+# Keep DOS files byte-exact: CRLF line endings and the prebuilt binary.
+clients/dos/*.INI -text
+clients/dos/*.BAT -text
+clients/dos/*.COM binary

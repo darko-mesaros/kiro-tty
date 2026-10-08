@@ -37,6 +37,7 @@ services:
       - "${KIRO_TTY_BIND:-127.0.0.1}:2222:22"   # SSH
       - "${KIRO_TTY_BIND:-127.0.0.1}:2323:23"   # telnet
       - "${KIRO_TTY_BIND:-127.0.0.1}:6400:6400" # raw TCP, C64 profile (no telnet IAC, 40 cols)
+      - "${KIRO_TTY_BIND:-127.0.0.1}:6401:6401" # raw TCP, PC profile (no telnet IAC, 80 cols)
     environment:
       # Kiro authentication (headless / API-key mode).
       # Generate a key at https://app.kiro.dev -> API Keys (requires a Kiro Pro,
