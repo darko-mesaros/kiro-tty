@@ -129,16 +129,17 @@ impl Renderer {
         self.convert_newlines(&logical)
     }
 
-    /// Emit a self-contained UI line (banner, prompt, tool status). Sanitized and
-    /// newline-terminated, but not wrapped mid-word beyond the width guard. Also
-    /// forces a break if we were mid-stream.
+    /// Emit a self-contained UI line (banner, prompt, tool status). Sanitized,
+    /// word-wrapped to the terminal width (words longer than the width are
+    /// hard-split), and newline-terminated. Also forces a break if we were
+    /// mid-stream.
     pub fn ui_line(&mut self, text: &str) -> String {
         let mut out = String::new();
         // If the agent stream left us mid-line, break first.
         if self.col > 0 || !self.word.is_empty() {
             out.push_str(&self.flush());
         }
-        let mut logical = sanitize(text, self.uppercase);
+        let mut logical = wrap_words(&sanitize(text, self.uppercase), self.width);
         logical.push('\n');
         out.push_str(&self.convert_newlines(&logical));
         out
@@ -252,9 +253,53 @@ pub fn sanitize(input: &str, uppercase: bool) -> String {
     out
 }
 
+/// Greedy word-wrap of one logical line to `width` columns, joining with `\n`.
+/// Words longer than `width` are hard-split so no output line ever exceeds it.
+fn wrap_words(text: &str, width: usize) -> String {
+    let width = width.max(1);
+    let mut out = String::new();
+    let mut col = 0usize;
+    for word in text.split_whitespace() {
+        let mut chars: Vec<char> = word.chars().collect();
+        // Break before the word if it would not fit on the current line.
+        if col > 0 && col + 1 + chars.len() > width {
+            out.push('\n');
+            col = 0;
+        } else if col > 0 {
+            out.push(' ');
+            col += 1;
+        }
+        // Hard-split anything longer than a whole line.
+        while chars.len() > width - col {
+            let rest = chars.split_off(width - col);
+            out.extend(chars);
+            out.push('\n');
+            chars = rest;
+            col = 0;
+        }
+        col += chars.len();
+        out.extend(chars);
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ui_line_wraps_to_width() {
+        let mut r = Renderer::new(40, Newline::Lf, false);
+        let out = r.ui_line("*** DANGER MODE: all tools auto-approved ***");
+        assert!(out.lines().all(|l| l.chars().count() <= 40), "{out:?}");
+        assert_eq!(out, "*** DANGER MODE: all tools auto-approved\n***\n");
+    }
+
+    #[test]
+    fn wrap_words_hard_splits_long_words() {
+        assert_eq!(wrap_words("ab /very/long/path", 6), "ab\n/very/\nlong/p\nath");
+        assert_eq!(wrap_words("short line", 80), "short line");
+    }
 
     #[test]
     fn sanitize_transliterates_smart_punctuation() {

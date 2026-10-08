@@ -50,7 +50,18 @@ ssh-keygen -A >/dev/null 2>&1 || true
 # SSH daemon in the background.
 /usr/sbin/sshd
 
-echo "kiro-tty: SSH on :22, telnet on :23. Login shell is Kiro TTY."
+# Raw TCP listener (no telnet protocol) for retro terminals behind WiFi modems.
+# busybox telnetd opens every connection with IAC option negotiation
+# (ff fd 01 ff fd 1f ff fb 01 ff fb 03). A modem that does not strip those
+# hands them to the terminal, which prints them as ^A ^_ ^C garbage, and some
+# terminal programs choke on them. This port speaks plain bytes over a pty,
+# like a classic BBS. It uses the C64 profile (40 cols, ^H erase); `login -p`
+# preserves KIRO_TTY_PROFILE into the login shell.
+KIRO_TTY_PROFILE=c64 socat \
+    TCP-LISTEN:6400,reuseaddr,fork \
+    EXEC:"/bin/login -p",pty,setsid,ctty,stderr,sane &
+
+echo "kiro-tty: SSH on :22, telnet on :23, raw C64 profile on :6400. Login shell is Kiro TTY."
 echo "kiro-tty: agent=tty  auth=KIRO_API_KEY"
 
 # telnetd in the foreground -> becomes the container's long-running process.

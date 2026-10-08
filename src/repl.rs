@@ -30,8 +30,9 @@ pub fn spawn_stdin_reader() -> mpsc::Receiver<InputLine> {
                 // EOF: the input stream closed. Drop the sender to signal the loop.
                 Ok(0) => break,
                 Ok(_) => {
-                    // Trim only the trailing CR/LF; preserve interior content.
-                    let line = buf.trim_end_matches(['\r', '\n']).to_string();
+                    // Trim only the trailing CR/LF, then apply any erase
+                    // characters the line discipline let through.
+                    let line = clean_line(buf.trim_end_matches(['\r', '\n']));
                     // `blocking_send` is correct here: we're on a plain OS thread,
                     // not inside the tokio runtime.
                     if tx.blocking_send(InputLine(line)).is_err() {
@@ -44,6 +45,30 @@ pub fn spawn_stdin_reader() -> mpsc::Receiver<InputLine> {
     });
 
     rx
+}
+
+/// Apply backspace (0x08) and delete (0x7F) as "erase previous character", and
+/// drop any other C0 control bytes (tab becomes a space).
+///
+/// Normally the pty line discipline does erasing for us, but it only honours
+/// ONE erase character (`stty erase`). Vintage terminals disagree on which key
+/// that is: a DECwriter's DELETE sends 0x7F, NovaTerm on a C64 sends 0x08. When
+/// the "other" one arrives, the kernel passes it through as data, and without
+/// this the prompt Kiro sees would contain literal backspace bytes. Doing it
+/// here makes the prompt correct regardless of which key the terminal uses.
+pub fn clean_line(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    for c in raw.chars() {
+        match c {
+            '\u{08}' | '\u{7f}' => {
+                out.pop();
+            }
+            '\t' => out.push(' '),
+            c if c.is_control() => {}
+            c => out.push(c),
+        }
+    }
+    out
 }
 
 /// A parsed line of input: either a wrapper control command or a prompt to send
@@ -128,6 +153,19 @@ mod tests {
             parse("what files are here?"),
             Command::Prompt("what files are here?".into())
         );
+    }
+
+    #[test]
+    fn backspace_and_delete_both_erase() {
+        assert_eq!(clean_line("helo\u{08}lo"), "hello");
+        assert_eq!(clean_line("helo\u{7f}lo"), "hello");
+        // Mixed, and more erases than characters, never underflows.
+        assert_eq!(clean_line("ab\u{08}\u{7f}\u{08}cd"), "cd");
+    }
+
+    #[test]
+    fn other_control_bytes_are_dropped() {
+        assert_eq!(clean_line("a\u{01}b\u{1b}c\td"), "abc d");
     }
 
     #[test]
