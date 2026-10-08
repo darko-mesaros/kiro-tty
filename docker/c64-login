@@ -1,0 +1,22 @@
+#!/bin/sh
+# Pre-login entry point for the raw C64 port (6400).
+#
+# socat runs this once per connection. It clears the screen, prints the plain
+# text banner from /etc/kiro-tty/c64-banner.txt, and hands the connection to
+# /bin/login.
+#
+# The banner is deliberately plain 7-bit text with no colour: NovaTerm's ANSI
+# mode ignored SGR background colours on real hardware (the earlier colour
+# block ghost came out blank). It also avoids \ | _ ~ { } because the C64
+# character set has no glyphs for them. Keep lines at 39 columns or fewer so
+# terminals that auto-wrap at column 40 do not double-space it.
+#
+# The banner is a fixed file owned by this image, never model output.
+
+BANNER="${KIRO_TTY_C64_BANNER:-/etc/kiro-tty/c64-banner.txt}"
+
+# Clear screen + cursor home (verified to work in NovaTerm ANSI mode).
+printf '\033[2J\033[H'
+[ -r "$BANNER" ] && cat "$BANNER"
+
+exec /bin/login -p

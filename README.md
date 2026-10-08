@@ -83,6 +83,15 @@ This profile wraps at 40 columns and treats the C64 DEL key (`^H`) as erase.
 Kiro TTY also cleans every input line itself, so both `^H` and `^?` erase
 correctly on any port, whichever one your terminal sends.
 
+Before the login prompt, port 6400 clears the screen and prints a plain-text
+Kiro ghost with block-letter `KIRO`, from `docker/c64-banner.txt`. It is
+mounted into the container, so you can redraw it and see the change on your
+next connection without rebuilding. Keep it to plain ASCII, 39 columns or
+fewer, and avoid `\ | _ ~ { }`, which the C64 character set cannot show. (An
+ANSI colour version was tried first; NovaTerm's ANSI mode ignored the
+background colours on real hardware.) The banner is a fixed file, never model
+output, so the "only plain text from Kiro" rule still holds.
+
 ## Using it
 
 Once logged in you are talking to Kiro. Type a request and press Return.

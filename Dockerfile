@@ -84,6 +84,10 @@ COPY docker/tty.json /home/kiro/.kiro/agents/tty.json
 COPY docker/kiro-shell /usr/local/bin/kiro-shell
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
+# C64 port pre-login banner: plain-text Kiro ghost + block letters.
+COPY docker/c64-login /usr/local/bin/c64-login
+COPY docker/c64-banner.txt /etc/kiro-tty/c64-banner.txt
+
 # Custom pre-login banner. telnet/ssh are network logins, so login shows
 # /etc/issue.net; /etc/issue is set too for completeness.
 COPY docker/issue /etc/issue
@@ -93,7 +97,7 @@ COPY docker/issue /etc/issue.net
 # quiet (no MOTD / last-login banners); show the custom banner pre-auth.
 RUN printf 'PasswordAuthentication yes\nPermitRootLogin no\nPrintMotd no\nPrintLastLog no\nBanner /etc/issue\n' \
         > /etc/ssh/sshd_config.d/kiro-tty.conf \
-    && chmod +x /usr/local/bin/kiro-shell /usr/local/bin/entrypoint.sh \
+    && chmod +x /usr/local/bin/kiro-shell /usr/local/bin/entrypoint.sh /usr/local/bin/c64-login \
     && echo /usr/local/bin/kiro-shell >> /etc/shells \
     && chown -R kiro:kiro /home/kiro/.kiro \
     # Silence Ubuntu login banners for both telnet (/bin/login) and SSH:
