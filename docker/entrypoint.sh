@@ -62,7 +62,13 @@ KIRO_TTY_PROFILE=c64 socat \
     TCP-LISTEN:6400,reuseaddr,fork \
     EXEC:/usr/local/bin/c64-login,pty,setsid,ctty,stderr,sane &
 
-echo "kiro-tty: SSH on :22, telnet on :23, raw C64 profile on :6400. Login shell is Kiro TTY."
+# Same raw listener with an 80-column PC profile, for DOS terminal programs
+# (MS-DOS Kermit, Telix, Procomm) behind a WiFi modem. Shares the banner.
+KIRO_TTY_PROFILE=pc socat \
+    TCP-LISTEN:6401,reuseaddr,fork \
+    EXEC:/usr/local/bin/c64-login,pty,setsid,ctty,stderr,sane &
+
+echo "kiro-tty: SSH on :22, telnet on :23, raw C64 profile on :6400, raw PC profile on :6401."
 echo "kiro-tty: agent=tty  auth=KIRO_API_KEY"
 
 # telnetd in the foreground -> becomes the container's long-running process.
