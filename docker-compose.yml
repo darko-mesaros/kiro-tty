@@ -29,8 +29,14 @@ services:
     container_name: kiro-tty
     hostname: kiro-tty
     ports:
-      - "127.0.0.1:2222:22"   # SSH
-      - "127.0.0.1:2323:23"   # telnet
+      # Bind address defaults to loopback. To reach the container from a LAN
+      # device (e.g. a serial-to-WiFi modem in front of a hardware terminal),
+      # set KIRO_TTY_BIND to the host's LAN IP in .env -- a specific address,
+      # not 0.0.0.0, so it is not also published on VPN/bridge interfaces.
+      # Note: Docker-published ports bypass ufw.
+      - "${KIRO_TTY_BIND:-127.0.0.1}:2222:22"   # SSH
+      - "${KIRO_TTY_BIND:-127.0.0.1}:2323:23"   # telnet
+      - "${KIRO_TTY_BIND:-127.0.0.1}:6400:6400" # raw TCP, C64 profile (no telnet IAC, 40 cols)
     environment:
       # Kiro authentication (headless / API-key mode).
       # Generate a key at https://app.kiro.dev -> API Keys (requires a Kiro Pro,
@@ -40,9 +46,10 @@ services:
       KIRO_API_KEY: "${KIRO_API_KEY:-}"
       # Override with:  KIRO_TTY_PASSWORD=... docker compose up
       KIRO_TTY_PASSWORD: "${KIRO_TTY_PASSWORD:-kiro}"
-      # Optional terminal shaping for the login shell:
-      # KIRO_TTY_WIDTH: "40"
-      # KIRO_TTY_NEWLINE: "crlf"
+      # Optional terminal shaping for the login shell (set in .env; empty =
+      # kiro-tty defaults of 80 columns / lf):
+      KIRO_TTY_WIDTH: "${KIRO_TTY_WIDTH:-}"
+      KIRO_TTY_NEWLINE: "${KIRO_TTY_NEWLINE:-}"
     volumes:
       # Kiro CLI is installed INSIDE the image (see Dockerfile) and authenticates
       # via the KIRO_API_KEY above, so nothing host-specific is required. This

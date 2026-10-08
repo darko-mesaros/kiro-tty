@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         openssh-server \
         busybox-static \
         login \
+        socat \
         ca-certificates \
         libgcc-s1 \
         libstdc++6 \
@@ -45,13 +46,26 @@ RUN userdel -r ubuntu 2>/dev/null || true \
                 /home/kiro/.local/share/kiro-cli \
     && chown -R kiro:kiro /home/kiro
 
-# Install the Kiro CLI from the official Linux zip (glibc x86_64 build). This
-# bakes the three binaries (kiro-cli launcher + kiro-cli-chat + kiro-cli-term)
-# into the image, so no host binaries need to be mounted. curl/unzip are
-# build-only and purged afterward to keep the layer lean.
-ARG KIRO_CLI_URL=https://desktop-release.q.us-east-1.amazonaws.com/latest/kirocli-x86_64-linux.zip
-RUN apt-get update && apt-get install -y --no-install-recommends curl unzip \
-    && curl --proto '=https' --tlsv1.2 -sSf "$KIRO_CLI_URL" -o /tmp/kirocli.zip \
+# Install the Kiro CLI from the official Linux zip (glibc build). This bakes
+# the three binaries (kiro-cli launcher + kiro-cli-chat + kiro-cli-term) into
+# the image, so no host binaries need to be mounted. curl/unzip are build-only
+# and purged afterward to keep the layer lean.
+#
+# TARGETARCH is set automatically by BuildKit (amd64 / arm64). The Kiro release
+# zips use kernel-style names (x86_64 / aarch64), so map between them. This
+# keeps the image buildable on both x86 boxes and ARM hosts (Graviton, Pi,
+# Apple Silicon). Set KIRO_CLI_URL explicitly to override the download.
+ARG TARGETARCH
+ARG KIRO_CLI_URL=""
+RUN set -eu; \
+    case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
+        amd64) kiro_arch=x86_64 ;; \
+        arm64) kiro_arch=aarch64 ;; \
+        *) echo "unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    url="${KIRO_CLI_URL:-https://desktop-release.q.us-east-1.amazonaws.com/latest/kirocli-${kiro_arch}-linux.zip}"; \
+    apt-get update && apt-get install -y --no-install-recommends curl unzip \
+    && curl --proto '=https' --tlsv1.2 -sSf "$url" -o /tmp/kirocli.zip \
     && unzip -q /tmp/kirocli.zip -d /tmp \
     && cp /tmp/kirocli/bin/kiro-cli /tmp/kirocli/bin/kiro-cli-chat /tmp/kirocli/bin/kiro-cli-term \
           /usr/local/bin/ \

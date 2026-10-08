@@ -16,6 +16,17 @@ export PATH="/usr/local/bin:${PATH:-/usr/bin:/bin}"
 # authenticate in headless/API-key mode.
 [ -r /etc/kiro-tty.env ] && . /etc/kiro-tty.env
 
+# Per-connection terminal profile. The raw-TCP listener (see entrypoint.sh)
+# sets KIRO_TTY_PROFILE and logs in with `login -p`, so it survives to here.
+# Profiles override the global settings from /etc/kiro-tty.env.
+case "${KIRO_TTY_PROFILE:-}" in
+    c64)
+        # C64 + NovaTerm in ANSI mode: 40 columns, and the DEL key sends ^H.
+        KIRO_TTY_WIDTH="${KIRO_TTY_C64_WIDTH:-40}"
+        stty erase '^H' 2>/dev/null || true
+        ;;
+esac
+
 WORKSPACE="${KIRO_TTY_WORKSPACE:-/home/kiro/workspace}"
 cd "$WORKSPACE" 2>/dev/null || cd "$HOME" 2>/dev/null || cd /
 
