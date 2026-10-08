@@ -62,6 +62,8 @@ services:
       # (issue.net is the file shown for telnet/SSH network logins.)
       - "./docker/issue:/etc/issue:ro"
       - "./docker/issue:/etc/issue.net:ro"
+      # C64 port banner (plain text Kiro ghost). Same idea: edit, reconnect.
+      - "./docker/c64-banner.txt:/etc/kiro-tty/c64-banner.txt:ro"
     # Keep it modest; this is a demo service, not production.
     restart: unless-stopped
 
