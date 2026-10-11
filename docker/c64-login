@@ -12,8 +12,16 @@
 # terminals that auto-wrap at column 40 do not double-space it.
 #
 # The banner is a fixed file owned by this image, never model output.
+#
+# The PC port (6401, KIRO_TTY_PROFILE=pc) gets an 80-column banner instead,
+# /etc/kiro-tty/pc-banner.txt. It is still 7-bit ASCII (Kermit's terminal
+# display is 7-bit by default) and stays at 78 columns or fewer for the same
+# auto-wrap reason.
 
-BANNER="${KIRO_TTY_C64_BANNER:-/etc/kiro-tty/c64-banner.txt}"
+case "${KIRO_TTY_PROFILE:-}" in
+    pc) BANNER="${KIRO_TTY_PC_BANNER:-/etc/kiro-tty/pc-banner.txt}" ;;
+    *)  BANNER="${KIRO_TTY_C64_BANNER:-/etc/kiro-tty/c64-banner.txt}" ;;
+esac
 
 # Clear screen + cursor home (verified to work in NovaTerm ANSI mode).
 printf '\033[2J\033[H'

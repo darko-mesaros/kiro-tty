@@ -104,10 +104,12 @@ ATDT192.168.1.50:6401
 ```
 
 Ready-made files are in [`clients/dos/`](clients/dos/): a Kermit script
-(`KIROTTY.INI` + `KIROTTY.BAT`) and TERM2, a 125-byte polled terminal for
-machines whose 8250 serial chip is faulty. The PC profile keeps `^?` as erase
-and echoes a `^H` raw, so the cursor steps back either way. Tested on an IBM
-5160 (TERM2, 300 baud).
+(`KIROTTY.INI` + `KIROTTY.BAT`) and TERM2, a 125-byte polled terminal kept as
+a fallback (see its README). The PC profile keeps `^?` as erase and echoes a
+`^H` raw, so the cursor steps back either way. Before login, port 6401 shows
+an 80-column version of the ghost banner, from `docker/pc-banner.txt`
+(mounted like the C64 one, 7-bit ASCII, 78 columns or fewer). Tested on an
+IBM 5160 with MS-DOS Kermit 3.14 at 300 baud.
 
 ## Using it
 

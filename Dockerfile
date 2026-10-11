@@ -87,6 +87,7 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 # C64 port pre-login banner: plain-text Kiro ghost + block letters.
 COPY docker/c64-login /usr/local/bin/c64-login
 COPY docker/c64-banner.txt /etc/kiro-tty/c64-banner.txt
+COPY docker/pc-banner.txt /etc/kiro-tty/pc-banner.txt
 
 # Custom pre-login banner. telnet/ssh are network logins, so login shows
 # /etc/issue.net; /etc/issue is set too for completeness.

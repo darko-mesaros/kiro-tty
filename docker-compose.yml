@@ -65,6 +65,8 @@ services:
       - "./docker/issue:/etc/issue.net:ro"
       # C64 port banner (plain text Kiro ghost). Same idea: edit, reconnect.
       - "./docker/c64-banner.txt:/etc/kiro-tty/c64-banner.txt:ro"
+      # 80-column banner for the PC port (6401).
+      - "./docker/pc-banner.txt:/etc/kiro-tty/pc-banner.txt:ro"
     # Keep it modest; this is a demo service, not production.
     restart: unless-stopped
 
