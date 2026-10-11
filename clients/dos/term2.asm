@@ -1,9 +1,11 @@
-; TERM2.COM - polled serial terminal for an 8250 whose LSR "data ready" bit
-; is broken (IBM 5160, IBM Async Card, diagnosed 2026-10-08).
+; TERM2.COM - polled serial terminal for when COM1's LSR "data ready" bit
+; never appears to set (IBM 5160, found 2026-10-08).
 ;
-; On this chip LSR bit 0 never sets, but the interrupt-identification
-; register (IIR, 3FA) still drops its "no interrupt pending" bit (bit 0)
-; when a byte arrives. So: enable only the received-data interrupt in IER
+; The real cause turned out to be a second card (a Quadram Quadboard) with
+; its own UART also at 3F8: reads came back ANDed, so the idle chip masked
+; LSR bit 0. The interrupt-identification register (IIR, 3FA) still drops
+; its "no interrupt pending" bit (bit 0) when a byte arrives, which survives
+; the AND. So: enable only the received-data interrupt in IER
 ; (the IRQ line itself is never used; the PIC is left alone), poll IIR bit 0,
 ; and read RBR when it goes low. Reading RBR clears the condition. MSR and LSR
 ; are read each time too, so a modem-status or line-status event can never
