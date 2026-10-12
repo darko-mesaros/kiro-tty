@@ -9,6 +9,11 @@ Agent Client Protocol over stdio, and does all rendering itself. The terminal
 only ever receives plain 7-bit ASCII, word-wrapped to its width. No ANSI
 escapes, cursor addressing, or Unicode.
 
+![kiro-tty architecture, drawn as an 80x25 DOS text-mode screen: dumb terminal > WiModem > Docker (telnet/SSH/raw TCP > kiro-tty > kiro-cli acp) > Kiro on Claude Sonnet 5](docs/architecture.png)
+
+The diagram is itself a real 80x25 text-mode DOS program, captured in
+DOSBox-X and stretched to CRT proportions.
+
 ## How to run?
 
 If you have `docker compose`, and `just`... Just run this:
